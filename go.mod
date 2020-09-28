@@ -18,6 +18,7 @@ require (
 	github.com/drand/drand v1.1.2-0.20200905144319-79c957281b32
 	github.com/drand/kyber v1.1.2
 	github.com/dustin/go-humanize v1.0.0
+	github.com/dvyukov/go-fuzz v0.0.0-20200916044129-21309f307f61 // indirect
 	github.com/elastic/go-sysinfo v1.3.0
 	github.com/fatih/color v1.8.0
 	github.com/filecoin-project/filecoin-ffi v0.30.4-0.20200716204036-cddc56607e1d
