@@ -5,15 +5,14 @@ package types
 import (
 	"bytes"
 	"fmt"
-	"github.com/google/go-cmp/cmp"
 
+	"github.com/google/go-cmp/cmp"
 	gfuzz "github.com/google/gofuzz"
-	fleece "github.com/filecoin-project/lotus/fleece/fuzzing"
+	fleece "github.com/leastauthority/fleece/fuzzing"
 )
 
 // Fuzzes DecodeBlockMsg using random data
 func FuzzBlockMsg(data []byte) int {
-
 	msg, err := DecodeBlockMsg(data)
 	if err != nil {
 		return fleece.FuzzNormal
@@ -22,26 +21,34 @@ func FuzzBlockMsg(data []byte) int {
 	if err != nil {
 		panic(fmt.Sprintf("Error in serializing BlockMsg: %v", err))
 	}
-	// Checks if the encoded message is different to the fuzz data.
-	if !bytes.Equal(encodedMsg, data) {
+
+	msg2, err := DecodeBlockMsg(encodedMsg)
+	if err != nil {
+		panic(fmt.Errorf("second decode errored: %w", err))
+	}
+	encodedMsg2, err := msg2.Serialize()
+	if err != nil {
+		panic(fmt.Errorf("second encode errored: %w", err))
+	}
+
+	if !bytes.Equal(encodedMsg, encodedMsg2) {
 		panic(fmt.Sprintf("Fuzz data and serialized data are not equal: %v", err))
 	}
-	return fleece.FuzzDiscard
+	return fleece.FuzzInteresting
 }
 
 // Structural fuzzing on the BlockMsg struct to provide valid binary data.
 func FuzzBlockMsgStructural(data []byte) int {
-
 	blockmsg := BlockMsg{}
 	f := gfuzz.NewFromGoFuzz(data).NilChance(0)
 	f.Fuzz(&blockmsg)
 	encodedMsg, err := blockmsg.Serialize()
 	if err != nil {
-		return fleece.FuzzNormal
+		panic(fmt.Errorf("unable to serialize BlockMsg: %w", err))
 	}
 	msg, err := DecodeBlockMsg(encodedMsg)
 	if err != nil {
-		panic(fmt.Sprintf("Error in decoding BlockMsg: %v", err))
+		panic(fmt.Errorf("unable to decode BlockMsg: %w", err))
 	}
 
 	// Checks if the decoded message is different to the initial blockmsg.
