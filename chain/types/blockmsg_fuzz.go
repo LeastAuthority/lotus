@@ -11,49 +11,65 @@ import (
 	fleece "github.com/leastauthority/fleece/fuzzing"
 )
 
-// Fuzzes DecodeBlockMsg using random data
 func FuzzBlockMsg(data []byte) int {
-	msg, err := DecodeBlockMsg(data)
+	msg1, err := DecodeBlockMsg(data)
 	if err != nil {
 		return fleece.FuzzNormal
 	}
-	encodedMsg, err := msg.Serialize()
+	msg1Bytes, err := msg1.Serialize()
 	if err != nil {
 		panic(fmt.Sprintf("Error in serializing BlockMsg: %v", err))
 	}
 
-	msg2, err := DecodeBlockMsg(encodedMsg)
+	msg2, err := DecodeBlockMsg(msg1Bytes)
 	if err != nil {
 		panic(fmt.Errorf("second decode errored: %w", err))
 	}
-	encodedMsg2, err := msg2.Serialize()
+	msg2Bytes, err := msg2.Serialize()
 	if err != nil {
 		panic(fmt.Errorf("second encode errored: %w", err))
 	}
 
-	if !bytes.Equal(encodedMsg, encodedMsg2) {
-		panic(fmt.Sprintf("Fuzz data and serialized data are not equal: %v", err))
+	if !bytes.Equal(msg1Bytes, msg2Bytes) {
+		panic(fmt.Sprintf("serialized messages are not equal: %v", err))
+	}
+
+	if !cmp.Equal(msg1, msg2) {
+		panic(fmt.Sprintf("deserialized messages are not equal: %v", err))
 	}
 	return fleece.FuzzInteresting
 }
 
-// Structural fuzzing on the BlockMsg struct to provide valid binary data.
 func FuzzBlockMsgStructural(data []byte) int {
-	blockmsg := BlockMsg{}
+	blockMsg := BlockMsg{}
 	f := gfuzz.NewFromGoFuzz(data).NilChance(0)
-	f.Fuzz(&blockmsg)
-	encodedMsg, err := blockmsg.Serialize()
+	f.Fuzz(&blockMsg)
+	msg1Bytes, err := blockMsg.Serialize()
 	if err != nil {
-		panic(fmt.Errorf("unable to serialize BlockMsg: %w", err))
+		return fleece.FuzzNormal
 	}
-	msg, err := DecodeBlockMsg(encodedMsg)
+
+	msg1, err := DecodeBlockMsg(msg1Bytes)
 	if err != nil {
 		panic(fmt.Errorf("unable to decode BlockMsg: %w", err))
 	}
 
-	// Checks if the decoded message is different to the initial blockmsg.
-	if !cmp.Equal(blockmsg, msg) {
-		panic(fmt.Sprintf("Decoded BlockMsg and serialized BlockMsg are not equal: %v", err))
+	msg2Bytes, err := msg1.Serialize()
+	if err != nil {
+		panic(fmt.Errorf("unable to serialize: %w", err))
+	}
+
+	msg2, err := DecodeBlockMsg(msg2Bytes)
+	if err != nil {
+		panic(fmt.Errorf("unable to deserialize BlockMsg: %w", err))
+	}
+
+	if !bytes.Equal(msg1Bytes, msg2Bytes) {
+		panic(fmt.Sprintf("serialized messages are not equal: %v", err))
+	}
+
+	if !cmp.Equal(msg1, msg2) {
+		panic(fmt.Sprintf("deserialized messages are not equal: %v", err))
 	}
 	return fleece.FuzzDiscard
 }

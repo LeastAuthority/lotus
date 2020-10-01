@@ -9,17 +9,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestFuzzBlockMsg(t *testing.T) {
+func TestFuzzBlockHeader(t *testing.T) {
 	_, panics, _ := fleece.
-		MustNewCrasherIterator(env, FuzzBlockMsg, filters...).
+		MustNewCrasherIterator(env, FuzzBlockHeader, filters...).
 		TestFailingLimit(t, crashLimit)
 
 	require.Zero(t, panics)
 }
 
-func TestFuzzBlockMsgStructural(t *testing.T) {
+func TestFuzzBlockHeaderStructural(t *testing.T) {
 	_, panics, _ := fleece.
-		MustNewCrasherIterator(env, FuzzBlockMsgStructural, filters...).
+		MustNewCrasherIterator(env, FuzzBlockHeaderStructural, filters...).
 		TestFailingLimit(t, crashLimit)
 
 	require.Zero(t, panics)
